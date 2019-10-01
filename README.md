@@ -23,13 +23,43 @@ Some of the event types supported by libproc are:
 
 ## Inter-process communication
 
-libproc makes it easy to communicate with other processes.
-On start-up, libproc reads the process command file definition (`proc_name.cmd.cfg`) and binds to an UDP port.
+libproc makes it easy to communicate with other processes. 
+Using a simple schema the XDR system generates C code to allow easy use of libprocs interproccess communication capability.
+Under the hood, proccesses send and receive commands on UDP ports. If a user had no access to libproc they would have to deal with the
+allocation of UDP ports, the packaging of data into UDP packets, and the handling of any necesarry response from the commanded process. 
+However the libproc library abstracts this would-be problem by auto-generating most of this code using the XDR architecture.
 
-Using this command definition, other processes can message this process.
+With the XDR architecture, process commands and the data structures they will use can be defined in a simple schema.
 
-In addition to inter-process communication, libproc also supports multicasting,
-where multiple processes can subscribe to message streams.
+## The XDR Schema
+
+Every proccess using the xdr schema to manager its inter-process communication will contain a .xp file in the same directory.
+
+There are three things that need to be defined in the .xp file of a process, the types (structs) it will use in inter-process communication, the commands associated with it, and the errors associated with it.
+
+At the top of the .xp file, each element of these things is assigned a unique hex number to allow for easier debugging. To ensure each process has unique hex codes for there types, commands and errors each process numbers their objects off of a different base. Bases are kept track of and allocated here <insert base doc>.
+
+A working example of the numbering might look like this:
+```c
+const CMD_BASE =       0x400;
+const TYPE_BASE = 0x01000400;
+const ERR_BASE =  0x02000400;
+
+enum types {
+   STATUS = TYPE_BASE + 0,
+   PRINT_PARAMS = TYPE_BASE + 1,
+};
+
+enum Cmds {
+   PRINT = CMD_BASE + 0,
+};
+
+enum Errs {
+   BAD_NUM = ERR_BASE + 0,
+};
+```
+Where each element of the enums is a type, command, or error used by the process.
+
 
 ## Open-Source Programs Using libproc
 
@@ -78,6 +108,5 @@ int main(void)
    return 0;
 }
 ```
-
 ## Additional Examples
 [Stopwatch using libproc](https://github.com/PolySat/libproc/tree/master/programs/stopwatch_example)
